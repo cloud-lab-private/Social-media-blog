@@ -1,5 +1,6 @@
 package DAO;
 import Model.Account;
+import Model.Message;
 import Util.ConnectionUtil;
 
 import java.sql.*;
@@ -7,41 +8,41 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class AccountDAO {
+public class MessageDAO {
     
-    public List<Account> getAllAccounts(){
+    public List<Message> getAllMessages(){
         Connection connection = ConnectionUtil.getConnection();
-        List<Account> accounts = new ArrayList<>();
+        List<Message> messages = new ArrayList<>();
         try{
-            String sql= "SELECT * from account;";
+            String sql= "SELECT * from message;";
             PreparedStatement sm = connection.prepareStatement(sql);
             ResultSet rs = sm.executeQuery();
             while(rs.next()){
-                Account account = new Account(rs.getInt("account_id"),rs.getString("username")
-                ,rs.getString("password"));
-                accounts.add(account);
+                Message message = new Message(rs.getInt("message_id"),rs.getInt("posted_by"),rs.getString("message_text")
+                ,rs.getLong("time_posted_epoch"));
+                messages.add(message);
             }
         }catch(SQLException e){
             System.out.println(e.getMessage());
         }
-        return accounts;
+        return messages;
     }
 
 
-    public Account getAccountById(int id){
+    public Message getMessageById(int id){
         Connection connection = ConnectionUtil.getConnection();
         try{
 
-            String sql = "SELECT * from account WHERE account_id = ?; ";
+            String sql = "SELECT * from message WHERE posted_by = ?; ";
             PreparedStatement sm = connection.prepareStatement(sql);
 
-            sm.setInt(1, id);
+            sm.setInt(2, id);
 
             ResultSet rs = sm.executeQuery();
             while(rs.next()){
-                Account account = new Account(rs.getInt("account_id"),rs.getString("username")
-                ,rs.getString("password"));
-                return account;
+                Message message = new Message(rs.getInt("message_id"),rs.getInt("posted_by"),rs.getString("message_text")
+                ,rs.getLong("time_posted_epoch"));
+                return message;
             }
         }catch(SQLException e){
             System.out.println(e.getMessage());
@@ -49,20 +50,21 @@ public class AccountDAO {
         return null;
     }
 
-    public Account createAccount(Account account){
+    public Message createMessage(Message message){
         Connection connection= ConnectionUtil.getConnection();
         try{
-            String sql = "INSERT INTO account (account_id, username, password) VALUES (?,?,?);";
+            String sql = "INSERT INTO message (message_id, posted_by, message_text,time_posted_epoch) VALUES (?,?,?);";
             PreparedStatement sm = connection.prepareStatement(sql,Statement.RETURN_GENERATED_KEYS);
-            sm.setInt(1,account.getAccount_id());
-            sm.setString(2, account.getUsername());
-            sm.setString(3,account.getPassword());
+            sm.setInt(1,message.message_id);
+            sm.setInt(2, message.posted_by);
+            sm.setString(3, message.message_text);
+            sm.setLong(4,message.time_posted_epoch);
 
             sm.executeUpdate();
             ResultSet primaryKeyResultSet = sm.getGeneratedKeys();
             if(primaryKeyResultSet.next()){
-                int auto_account_id = (int) primaryKeyResultSet.getLong(1);
-                return new Account(auto_account_id,account.getUsername(),account.getPassword());
+                int auto_message_id = (int) primaryKeyResultSet.getLong(1);
+                return new Message(auto_message_id,message.posted_by,message.message_text,message.time_posted_epoch);
             }
         }catch(SQLException e){
             System.out.println(e.getMessage());
@@ -70,7 +72,7 @@ public class AccountDAO {
         return null;
     }
 /*
- * change old username to a new username
+ * update message
  */
 
     public void updateAccountName(String name, Account account){
